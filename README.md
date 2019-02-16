@@ -3,8 +3,8 @@ play4elk
 
 A small note for installing and configuring elk
 
-Role Variables
---------------
+Variables
+---------
 
 can change kibana access under vars/main.yml (kibana_admin.name and kibana_admin.pw)
 
@@ -16,7 +16,7 @@ Including an example of how to use your role (for instance, with variables passe
     ---
     - hosts: node1
       roles:
-        - role: elk
+        - role: play4elk
           when: ansible_processor_vcpus == 1 and ansible_memtotal_mb >= 2048 and ansible_processor_vcpus == 1 and  ansible_os_family == 'RedHat'
     ...
     
