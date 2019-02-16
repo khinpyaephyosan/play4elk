@@ -1,4 +1,4 @@
-Role Name
+play4elk
 =========
 
 A small note for installing and configuring elk
@@ -6,7 +6,7 @@ A small note for installing and configuring elk
 Role Variables
 --------------
 
-can change kibanaadmin password under vars/main.yml (kibana_admin.name and kibana_admin.pw)
+can change kibana access under vars/main.yml (kibana_admin.name and kibana_admin.pw)
 
 Example Playbook
 ----------------
