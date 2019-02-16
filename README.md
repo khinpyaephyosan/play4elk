@@ -24,3 +24,8 @@ Author Information
 ------------------
 
 https://www.linkedin.com/in/lillian-phyoe-a4485113a/
+
+
+Reference
+---------
+https://www.digitalocean.com/community/tutorials/how-to-install-elasticsearch-logstash-and-kibana-elk-stack-on-centos-7
