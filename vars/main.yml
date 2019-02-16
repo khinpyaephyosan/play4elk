@@ -1,0 +1,20 @@
+---
+# vars file for elk
+
+elastic_repo: http://packages.elastic.co/elasticsearch/2.x/centos
+kibana_repo: https://artifacts.elastic.co/packages/6.x/yum
+logstash_repo: http://packages.elasticsearch.org/logstash/2.2/centos
+gpg_key: http://packages.elastic.co/GPG-KEY-elasticsearch
+prerequesties:
+    - httpd-tools
+    - java-1.8.0-openjdk.x86_64
+elk_packages:
+    - elasticsearch
+    - kibana
+    - nginx
+    - logstash
+kibana_admin: 
+    - name: kibanaadmin
+      pw: kibanaadmin
+...
+

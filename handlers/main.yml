@@ -1,0 +1,19 @@
+---
+# handlers file for elk
+
+- name: start and enable elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+- name: start and enable kibana
+  service: 
+    name: kibana
+    state: started
+    enabled: yes
+- name: start and enable nginx
+  service: 
+    name: nginx
+    state: started
+    enabled: yes
+...

@@ -1,0 +1,174 @@
+---
+# tasks file for elk
+ - name: prequesties
+   block:
+          - name: disble selinux
+            selinux:
+              state: disabled
+          - name: install prerequesties
+            yum:
+              name: "{{ item }}"
+              state: latest
+            with_items: "{{ prerequesties }}"
+            async: 1
+            poll: 0
+   tags: init
+ - name: congiure repo
+   block:
+          - name: install elasticsearch repository
+            yum_repository:
+              name: elasticsearch-2.x
+              description: elasticserch
+              baseurl: "{{ elastic_repo }}"
+              gpgkey: "{{ gpg_key }}"
+              gpgcheck: yes
+              enabled: yes
+              state: present
+            async: 1
+            poll: 0
+          - name: wait for elasticsearch-2.x file present
+            wait_for:
+              path: /etc/yum.repos.d/elasticsearch-2.x.repo
+              delay: 3 
+              timeout: 5
+          - name: install kibana repository
+            yum_repository:
+              name: kibana-6.x
+              description: kibana
+              baseurl: "{{ kibana_repo }}"
+              gpgkey: "{{ gpg_key }}"
+              gpgcheck: yes
+              enabled: yes
+              state: present
+            async: 1
+            poll: 0
+          - name: wait for kibana-6.x file present
+            wait_for:
+              path: /etc/yum.repos.d/kibana-6.x.repo
+              delay: 3
+              timeout: 5
+          - name: install logstash repository
+            yum_repository:
+              name: logstash-2.2
+              description: logstash
+              baseurl: "{{ logstash_repo }}"
+              gpgkey: "{{ gpg_key }}"
+              gpgcheck: yes
+              enabled: yes
+              state: present
+            async: 1
+            poll: 0
+          - name: wait for logstash-2.2 file present 
+            wait_for:
+              path: /etc/yum.repos.d/logstash-2.2.repo
+              delay: 3
+              timeout: 5
+   tags: add repo
+ - name: configure elk
+   block:
+          - name: install elk_packages
+            yum:
+              name: "{{ item }}"
+              state: latest
+            with_items: "{{ elk_packages }}"
+            async: 1
+            poll: 0
+          - name: copy elasticsearch config
+            template:
+              src: elasticsearch.yml.j2
+              dest: /etc/elasticsearch/elasticsearch.yml
+              owner: root
+              group: root
+              mode: 0644
+            notify: start and enable elasticsearch
+          - name: copy kibana config
+            template:
+              src: kibana.yml.j2
+              dest: /etc/kibana/kibana.yml
+              owner: root
+              group: root
+              mode: 0644
+            notify: start and enable kibana
+          - name: secure web interface
+            htpasswd:
+              path: /etc/nginx/htpasswd.users
+              name: "{{ item.name }}"
+              password: "{{ item.pw }}"
+              crypt_scheme: sha512_crypt
+              owner: root
+              group: root
+              mode: 0644
+            async: 1
+            poll: 0
+            with_items: "{{ kibana_admin }}"
+          - name: configure nginx.conf
+            template:
+              src: nginx.conf.j2
+              dest: /etc/nginx/nginx.conf
+              owner: root
+              group: root
+              mode: 0644  
+          - name: copy kibana.conf.j2 template
+            template: 
+              src: kibana.conf.j2
+              dest: /etc/nginx/conf.d/kibana.conf
+              owner: root
+              group: root
+              mode: 0644
+              backup: yes
+            notify: start and enable nginx
+          - name: configure openssl
+            lineinfile:
+              path: /etc/pki/tls/openssl.cnf
+              regexp: "^typical CA"
+              insertafter: "typical CA"
+              line: "\nsubjectAltName = IP: {{ ansible_default_ipv4.address }}"
+              firstmatch: yes
+          - name: generate SSL certificate and private key
+            shell: 
+              cmd: "sudo openssl req -config /etc/pki/tls/openssl.cnf -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout /etc/pki/tls/private/logstash-forwarder.key -out /etc/pki/tls/certs/logstash-forwarder.crt"  
+            async: 1
+            poll: 0
+          - name: download kibana dashboard
+            get_url:
+              url: https://download.elastic.co/beats/dashboards/beats-dashboards-1.1.0.zip
+              dest: /opt/beats-dashboards.zip
+            async: 1
+            poll: 0
+          - name: check download file
+            wait_for:
+              path: /opt/beats-dashboards.zip
+              delay: 5
+              timeout: 60
+          - name: extract zip
+            unarchive:
+              src: /opt/beats-dashboards.zip
+              dest: /opt
+              remote_src: yes
+          - name: load dashboard
+            shell:
+              cmd: cd /opt/beats-dashboards-* && ./load.sh
+   tags: config
+ - name: add fw rule
+   block:
+          - name: add fw rule for nginx
+            firewalld:
+              port: 80/tcp             
+              permanent: yes
+              state: enabled
+          - name: add fw rule for kibana
+            firewalld:
+              port: 5601/tcp
+              permanent: yes
+              state: enabled
+          - name: add fw rule for elasticsearch
+            firewalld:
+              port: 9200/tcp
+              permanent: yes
+              state: enabled
+          - name: reload fw
+            service:
+              name: firewalld
+              state: reloaded
+   tags: fw
+... 
