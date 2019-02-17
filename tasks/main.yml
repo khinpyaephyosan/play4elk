@@ -13,6 +13,7 @@
             async: 1
             poll: 0
    tags: init
+   when: "ansible_fqdn == 'node-1'"
  - name: congiure repo
    block:
           - name: install elasticsearch repository
@@ -64,6 +65,7 @@
               delay: 3
               timeout: 5
    tags: add repo
+   when: "ansible_fqdn == node-1"
  - name: configure elk
    block:
           - name: install elk_packages
@@ -129,6 +131,12 @@
               cmd: "sudo openssl req -config /etc/pki/tls/openssl.cnf -x509 -days 3650 -batch -nodes -newkey rsa:2048 -keyout /etc/pki/tls/private/logstash-forwarder.key -out /etc/pki/tls/certs/logstash-forwarder.crt"  
             async: 1
             poll: 0
+          - name: download ssl certificate
+            fetch:
+              src: /etc/pki/tls/certs/logstash-forwarder.crt
+              dest: /tmp/
+              flat: yes
+            notify: start and enable logstash
           - name: download kibana dashboard
             get_url:
               url: https://download.elastic.co/beats/dashboards/beats-dashboards-1.1.0.zip
@@ -149,6 +157,7 @@
             shell:
               cmd: cd /opt/beats-dashboards-* && ./load.sh
    tags: config
+   when: "ansible_fqdn == 'node-1'"
  - name: add fw rule
    block:
           - name: add fw rule for nginx
@@ -171,4 +180,59 @@
               name: firewalld
               state: reloaded
    tags: fw
+   when: "ansible_fqdn == 'node-1'"
+ - name: config for client
+   block: 
+          - name: create ssl directory
+            file:
+              path: /etc/pki/tls/certs
+              state: directory
+              mode: 0755
+          - name: copy ssl certificate
+            copy:
+              src: /tmp/logstash-forwarder.crt
+              dest: /etc/pki/tls/certs/logstash-forwarder.crt
+          - name: install beat repository
+            yum_repository:
+              name: beat
+              description: beat
+              baseurl: "{{ beat_repo }}"
+              gpgkey: "{{ gpg_key }}"
+              gpgcheck: yes
+              enabled: yes
+              state: present
+            async: 1
+            poll: 0
+          - name: wait for beat file present
+            wait_for:
+              path: /etc/yum.repos.d/beat.repo
+              delay: 3
+              timeout: 5
+          - name: install filebeat and metricbeat
+            yum:
+              name: "{{ item }}"
+              state: latest
+            with_items: 
+              - filebeat
+              - metricbeat
+          - name: copy filebeat.yml.j2 template
+            template:
+              src: filebeat.yml.j2
+              dest: /etc/filebeat/filebeat.yml
+              owner: root
+              group: root
+              mode: 0644
+              backup: yes
+            notify: start and enable filebeat
+          - name: copy metricbeat.yml.j2 template
+            template:
+              src: metricbeat.yml.j2
+              dest: /etc/metricbeat/metricbeat.yml
+              owner: root
+              group: root
+              mode: 0644
+              backup: yes 
+            notify: start and enable metricbeat         
+   tags: client install and config
+   when: "ansible_fqdn == 'client-1'"
 ... 

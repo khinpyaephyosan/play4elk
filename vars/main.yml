@@ -1,9 +1,10 @@
 ---
 # vars file for elk
-
+server_ip: 192.168.88.129
 elastic_repo: http://packages.elastic.co/elasticsearch/2.x/centos
 kibana_repo: https://artifacts.elastic.co/packages/6.x/yum
 logstash_repo: http://packages.elasticsearch.org/logstash/2.2/centos
+beat_repo: https://packages.elastic.co/beats/yum/el/$basearch
 gpg_key: http://packages.elastic.co/GPG-KEY-elasticsearch
 prerequesties:
     - httpd-tools
@@ -16,5 +17,5 @@ elk_packages:
 kibana_admin: 
     - name: kibanaadmin
       pw: kibanaadmin
-...
+
 

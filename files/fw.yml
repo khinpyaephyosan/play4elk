@@ -1,0 +1,6 @@
+---
+- name: add fw for nginx
+  firewalld:
+    service: nginx
+    parmanent: yes
+    state: enabled

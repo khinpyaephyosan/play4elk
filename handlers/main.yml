@@ -16,4 +16,19 @@
     name: nginx
     state: started
     enabled: yes
+- name: start and enable logstash
+  service:
+    name: logstash
+    state: started
+    enabled: yes
+- name: start and enable filebeat
+  service:
+    name: filebeat
+    state: started
+    enabled: yes
+- name: start and enable metricbeat
+  service:
+    name: metricbeat
+    state: started
+    eanble: yes
 ...
