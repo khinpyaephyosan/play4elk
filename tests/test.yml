@@ -1,6 +1,6 @@
 ---
 - hosts: all
   roles:
-    - role: elk
-      when: ansible_processor_vcpus == 1 and ansible_memtotal_mb >= 927 and ansible_processor_vcpus == 1 and  ansible_os_family == 'RedHat'
+    - role: play4elk
+      when: ansible_processor_vcpus == 1 and ansible_memtotal_mb >= 927 and  ansible_os_family == 'RedHat'
 ...
