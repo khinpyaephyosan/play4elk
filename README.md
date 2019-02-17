@@ -1,5 +1,5 @@
-play4elk
-=========
+elk
+===
 
 A small note for installing and configuring elk
 
